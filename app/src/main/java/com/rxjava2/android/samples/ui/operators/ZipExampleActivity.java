@@ -48,84 +48,47 @@ public class ZipExampleActivity extends AppCompatActivity {
     }
 
     /*
-    * Here we are getting two user list
-    * One, the list of cricket fans
-    * Another one, the list of football fans
-    * Then we are finding the list of users who loves both
+      在这里，我们得到两个用户列表一，
+      板球迷的列表另一个，足球迷的名单然后，
+      我们正在寻找爱好的用户列表
     */
     private void doSomeWork() {
-        Observable.zip(getCricketFansObservable(), getFootballFansObservable(),
-                new BiFunction<List<User>, List<User>, List<User>>() {
+        Observable.zip(Observable.create(new ObservableOnSubscribe<List<User>>() {
                     @Override
-                    public List<User> apply(List<User> cricketFans, List<User> footballFans) throws Exception {
+                    public void subscribe(ObservableEmitter<List<User>> e) throws Exception {
+                            e.onNext(Utils.getUserListWhoLovesCricket());//发射第一个数据
+                            e.onComplete();
+                    }
+                }), Observable.create(new ObservableOnSubscribe<List<User>>() {
+                    @Override  public void subscribe(ObservableEmitter<List<User>> e) throws Exception {
+                            e.onNext(Utils.getUserListWhoLovesFootball());//发射第二个数据
+                            e.onComplete();
+                    }
+                }), new BiFunction<List<User>, List<User>, List<User>>() {  //接收两个参数 返回一个结果 本质还是对原来数据的处理
+                    @Override  public List<User> apply(List<User> cricketFans, List<User> footballFans) throws Exception {
                         return Utils.filterUserWhoLovesBoth(cricketFans, footballFans);
                     }
                 })
-                // Run on a background thread
                 .subscribeOn(Schedulers.io())
-                // Be notified on the main thread
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(getObserver());
+                .subscribe(new Observer<List<User>>() {
+                   @Override public void onSubscribe(Disposable d) {
+                        Log.d(TAG, " onSubscribe : " + d.isDisposed());
+                    }
+                    @Override public void onNext(List<User> userList) {
+                        textView.append(" onNext");
+                        textView.append(AppConstant.LINE_SEPARATOR);
+                        for (User user : userList) {
+                            textView.append(" firstname : " + user.firstname);
+                            textView.append(AppConstant.LINE_SEPARATOR);
+                        }
+                        Log.d(TAG, " onNext : " + userList.size());
+                    }
+                    @Override public void onError(Throwable e) {  Log.d(TAG, " onError : " + e.getMessage());  }
+                    @Override  public void onComplete() {  Log.d(TAG, " onComplete"); }
+                });
     }
 
-    private Observable<List<User>> getCricketFansObservable() {
-        return Observable.create(new ObservableOnSubscribe<List<User>>() {
-            @Override
-            public void subscribe(ObservableEmitter<List<User>> e) throws Exception {
-                if (!e.isDisposed()) {
-                    e.onNext(Utils.getUserListWhoLovesCricket());
-                    e.onComplete();
-                }
-            }
-        });
-    }
-
-    private Observable<List<User>> getFootballFansObservable() {
-        return Observable.create(new ObservableOnSubscribe<List<User>>() {
-            @Override
-            public void subscribe(ObservableEmitter<List<User>> e) throws Exception {
-                if (!e.isDisposed()) {
-                    e.onNext(Utils.getUserListWhoLovesFootball());
-                    e.onComplete();
-                }
-            }
-        });
-    }
-
-    private Observer<List<User>> getObserver() {
-        return new Observer<List<User>>() {
-
-            @Override
-            public void onSubscribe(Disposable d) {
-                Log.d(TAG, " onSubscribe : " + d.isDisposed());
-            }
-
-            @Override
-            public void onNext(List<User> userList) {
-                textView.append(" onNext");
-                textView.append(AppConstant.LINE_SEPARATOR);
-                for (User user : userList) {
-                    textView.append(" firstname : " + user.firstname);
-                    textView.append(AppConstant.LINE_SEPARATOR);
-                }
-                Log.d(TAG, " onNext : " + userList.size());
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                textView.append(" onError : " + e.getMessage());
-                textView.append(AppConstant.LINE_SEPARATOR);
-                Log.d(TAG, " onError : " + e.getMessage());
-            }
-
-            @Override
-            public void onComplete() {
-                textView.append(" onComplete");
-                textView.append(AppConstant.LINE_SEPARATOR);
-                Log.d(TAG, " onComplete");
-            }
-        };
-    }
 
 
 }

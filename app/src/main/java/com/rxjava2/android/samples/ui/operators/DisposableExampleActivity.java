@@ -52,32 +52,29 @@ public class DisposableExampleActivity extends AppCompatActivity {
     }
 
     /*
-     * Example to understand how to use disposables.
-     * disposables is cleared in onDestroy of this activity.
+         例子来了解如何使用一次性用品。
+         在这个活动中使用一次性清除。
      */
     void doSomeWork() {
-        disposables.add(sampleObservable()
-                // Run on a background thread
-                .subscribeOn(Schedulers.io())
-                // Be notified on the main thread
-                .observeOn(AndroidSchedulers.mainThread())
+        disposables.add(Observable.defer(new Callable<ObservableSource<? extends String>>() {
+            @Override public ObservableSource<? extends String> call() throws Exception {
+//                SystemClock.sleep(2000);  // Do some long running operation
+                return Observable.just("one", "two", "three", "four", "five");
+                   }  })
+                .subscribeOn(Schedulers.io())  // Run on a background thread
+                .observeOn(AndroidSchedulers.mainThread())  // Be notified on the main thread
                 .subscribeWith(new DisposableObserver<String>() {
-                    @Override
-                    public void onComplete() {
+                @Override public void onComplete() {
                         textView.append(" onComplete");
                         textView.append(AppConstant.LINE_SEPARATOR);
                         Log.d(TAG, " onComplete");
                     }
-
-                    @Override
-                    public void onError(Throwable e) {
+             @Override public void onError(Throwable e) {
                         textView.append(" onError : " + e.getMessage());
                         textView.append(AppConstant.LINE_SEPARATOR);
                         Log.d(TAG, " onError : " + e.getMessage());
                     }
-
-                    @Override
-                    public void onNext(String value) {
+             @Override  public void onNext(String value) {
                         textView.append(" onNext : value : " + value);
                         textView.append(AppConstant.LINE_SEPARATOR);
                         Log.d(TAG, " onNext value : " + value);
@@ -85,14 +82,5 @@ public class DisposableExampleActivity extends AppCompatActivity {
                 }));
     }
 
-    static Observable<String> sampleObservable() {
-        return Observable.defer(new Callable<ObservableSource<? extends String>>() {
-            @Override
-            public ObservableSource<? extends String> call() throws Exception {
-                // Do some long running operation
-                SystemClock.sleep(2000);
-                return Observable.just("one", "two", "three", "four", "five");
-            }
-        });
-    }
+
 }
