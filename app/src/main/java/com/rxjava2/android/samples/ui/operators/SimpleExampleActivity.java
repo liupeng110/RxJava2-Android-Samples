@@ -33,59 +33,23 @@ public class SimpleExampleActivity extends AppCompatActivity {
         textView = (TextView) findViewById(R.id.textView);
 
         btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+            @Override public void onClick(View view) {
                 doSomeWork();
             }
         });
     }
 
-    /*
-     * simple example to emit two value one by one
-     */
+     //逐个发送值
     private void doSomeWork() {
-        getObservable()
-                // Run on a background thread
-                .subscribeOn(Schedulers.io())
-                // Be notified on the main thread
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(getObserver());
+        Observable.just("Cricket1", "Football2")  //按顺序挨个发射数据
+                .subscribeOn(Schedulers.io())                                     //后台线程运行
+                .observeOn(AndroidSchedulers.mainThread())         // 通知主线程
+                .subscribe( new Observer<String>() {
+                    @Override public void onSubscribe(Disposable d) { Log.d(TAG, " onSubscribe : " + d.isDisposed());  }
+                    @Override public void onNext(String value) {  textView.append(value); } //多次进入,这里处理数据
+                    @Override public void onError(Throwable e) { e.printStackTrace(); }                           //处理各种异常信息
+                    @Override  public void onComplete() {   Log.d(TAG, " 完成onComplete");   }  //全部接收完成之后
+                });
     }
-
-    private Observable<String> getObservable() {
-        return Observable.just("Cricket", "Football");
-    }
-
-    private Observer<String> getObserver() {
-        return new Observer<String>() {
-
-            @Override
-            public void onSubscribe(Disposable d) {
-                Log.d(TAG, " onSubscribe : " + d.isDisposed());
-            }
-
-            @Override
-            public void onNext(String value) {
-                textView.append(" onNext : value : " + value);
-                textView.append(AppConstant.LINE_SEPARATOR);
-                Log.d(TAG, " onNext : value : " + value);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                textView.append(" onError : " + e.getMessage());
-                textView.append(AppConstant.LINE_SEPARATOR);
-                Log.d(TAG, " onError : " + e.getMessage());
-            }
-
-            @Override
-            public void onComplete() {
-                textView.append(" onComplete");
-                textView.append(AppConstant.LINE_SEPARATOR);
-                Log.d(TAG, " onComplete");
-            }
-        };
-    }
-
 
 }
