@@ -19,8 +19,7 @@ public class MyApplication extends Application {
     public static final String TAG = "MyApplication";
     private RxBus bus;
 
-    @Override
-    public void onCreate() {
+    @Override public void onCreate() {
         super.onCreate();
         bus = new RxBus();
     }
@@ -32,8 +31,7 @@ public class MyApplication extends Application {
     public void sendAutoEvent() {
         Observable.timer(2, TimeUnit.SECONDS)
                 .subscribe(new Consumer<Long>() {
-                    @Override
-                    public void accept(Long aLong) throws Exception {
+                    @Override public void accept(Long aLong) throws Exception { //自己接收自己的消息
                         bus.send(new Events.AutoEvent());
                     }
                 });
